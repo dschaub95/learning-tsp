@@ -12,14 +12,14 @@ def _pad_mask(mask):
 
 
 def _mask_bool2byte(mask):
-    assert mask.dtype == torch.uint8
+    assert mask.dtype == torch.bool
     # assert (mask <= 1).all()  # Precondition, disabled for efficiency
     mask, d = _pad_mask(mask)
-    return (mask.view(*mask.size()[:-1], d, 8) << torch.arange(8, out=mask.new())).sum(-1, dtype=torch.uint8)
+    return (mask.view(*mask.size()[:-1], d, 8) << torch.arange(8, out=mask.new())).sum(-1, dtype=torch.bool)
 
 
 def _mask_byte2long(mask):
-    assert mask.dtype == torch.uint8
+    assert mask.dtype == torch.bool
     mask, d = _pad_mask(mask)
     # Note this corresponds to a temporary factor 8
     # memory overhead by converting to long before summing
@@ -28,14 +28,14 @@ def _mask_byte2long(mask):
 
 
 def mask_bool2long(mask):
-    assert mask.dtype == torch.uint8
+    assert mask.dtype == torch.bool
     return _mask_byte2long(_mask_bool2byte(mask))
 
 
 def _mask_long2byte(mask, n=None):
     if n is None:
         n = 8 * mask.size(-1)
-    return (mask[..., None] >> (torch.arange(8, out=mask.new()) * 8))[..., :n].to(torch.uint8).view(*mask.size()[:-1], -1)[..., :n]
+    return (mask[..., None] >> (torch.arange(8, out=mask.new()) * 8))[..., :n].to(torch.bool).view(*mask.size()[:-1], -1)[..., :n]
 
 
 def _mask_byte2bool(mask, n=None):

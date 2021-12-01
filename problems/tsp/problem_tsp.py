@@ -105,7 +105,7 @@ class TSP(object):
             )
 
         state = TSP.make_state(
-            nodes, graph, visited_dtype=torch.int64 if compress_mask else torch.uint8
+            nodes, graph, visited_dtype=torch.int64 if compress_mask else torch.bool
         )
 
         return beam_search(state, beam_size, propose_expansions)
@@ -200,7 +200,7 @@ class TSPDataset(Dataset):
         nodes = self.nodes_coords[idx]
         item = {
             'nodes': torch.FloatTensor(nodes),
-            'graph': torch.ByteTensor(nearest_neighbor_graph(nodes, self.neighbors, self.knn_strat))
+            'graph': torch.BoolTensor(nearest_neighbor_graph(nodes, self.neighbors, self.knn_strat))
         }
         if self.supervised:
             # Add groundtruth labels in case of SL

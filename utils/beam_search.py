@@ -171,7 +171,7 @@ def segment_topk_idx(x, k, ids):
     offsets = group_offsets[ids]  # Look up offsets based on ids, effectively repeating for the repetitions per id
 
     # We want topk so need to sort x descending so sort -x (be careful with unsigned data type!)
-    idx_sorted = torch_lexsort((-(x if x.dtype != torch.uint8 else x.int()).detach(), ids))
+    idx_sorted = torch_lexsort((-(x if x.dtype != torch.bool else x.int()).detach(), ids))
 
     # This will filter first k per group (example k = 2)
     # ids     = [0, 0, 0, 1, 1, 1, 1, 2]

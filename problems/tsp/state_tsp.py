@@ -26,7 +26,7 @@ class StateTSP(NamedTuple):
 
     @property
     def visited(self):
-        if self.visited_.dtype == torch.uint8:
+        if self.visited_.dtype == torch.bool:
             return self.visited_
         else:
             return mask_long2bool(self.visited_, n=self.loc.size(-2))
@@ -44,7 +44,7 @@ class StateTSP(NamedTuple):
         return super(StateTSP, self).__getitem__(key)
 
     @staticmethod
-    def initialize(loc, graph, visited_dtype=torch.uint8):
+    def initialize(loc, graph, visited_dtype=torch.bool):
 
         batch_size, n_loc, _ = loc.size()
         prev_a = torch.zeros(batch_size, 1, dtype=torch.long, device=loc.device)
@@ -58,9 +58,9 @@ class StateTSP(NamedTuple):
             visited_=(  # Visited as mask is easier to understand, as long more memory efficient
                 torch.zeros(
                     batch_size, 1, n_loc,
-                    dtype=torch.uint8, device=loc.device
+                    dtype=torch.bool, device=loc.device
                 )
-                if visited_dtype == torch.uint8
+                if visited_dtype == torch.bool
                 else torch.zeros(batch_size, 1, (n_loc + 63) // 64, dtype=torch.int64, device=loc.device)  # Ceil
             ),
             lengths=torch.zeros(batch_size, 1, device=loc.device),
@@ -95,7 +95,7 @@ class StateTSP(NamedTuple):
         # in which case we can check this way if we should update
         first_a = prev_a if self.i.item() == 0 else self.first_a
 
-        if self.visited_.dtype == torch.uint8:
+        if self.visited_.dtype == torch.bool:
             # Add one dimension since we write a single value
             visited_ = self.visited_.scatter(-1, prev_a[:, :, None], 1)
         else:
@@ -117,7 +117,7 @@ class StateTSP(NamedTuple):
     def get_graph_mask(self):
         batch_size, n_loc, _ = self.loc.size()
         if self.i.item() == 0:
-            return torch.zeros(batch_size, 1, n_loc, dtype=torch.uint8, device=self.loc.device)
+            return torch.zeros(batch_size, 1, n_loc, dtype=torch.bool, device=self.loc.device)
         else:
             return self.graph.gather(1, self.prev_a.unsqueeze(-1).expand(-1, -1, n_loc))
             
