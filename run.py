@@ -22,10 +22,16 @@ from nets.encoders.mlp_encoder import MLPEncoder
 from reinforce_baselines import NoBaseline, ExponentialBaseline, CriticBaseline, RolloutBaseline, WarmupBaseline
 
 from utils import torch_load_cpu, load_problem
-
+import wandb
 import warnings
+# warnings.simplefilter("error")
 warnings.filterwarnings("ignore", message="indexing with dtype torch.uint8 is now deprecated, please use a dtype torch.bool instead.")
 
+
+class Config:
+    def __init__(self, dictionary) -> None:
+        for key in dictionary:
+            self.__dict__[key] = dictionary[key]
 
 def run(opts):
     """Top level method to run experiments for SL and RL
@@ -37,10 +43,10 @@ def run(opts):
 
 
 def _run_rl(opts):
-
+    wandb.init(config=opts.__dict__, sync_tensorboard=True)
+    opts = Config(wandb.config._items)
     # Pretty print the run args
     pp.pprint(vars(opts))
-
     # Set the random seed
     torch.manual_seed(opts.seed)
     np.random.seed(opts.seed)

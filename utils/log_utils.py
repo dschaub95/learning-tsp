@@ -1,3 +1,5 @@
+import wandb
+
 def log_values(cost, grad_norms, epoch, batch_id, step, log_likelihood, 
                reinforce_loss, bl_loss, tb_logger, opts):
     avg_cost = cost.mean().item()
@@ -7,7 +9,15 @@ def log_values(cost, grad_norms, epoch, batch_id, step, log_likelihood,
     print('\nepoch: {}, train_batch_id: {}, avg_cost: {}'.format(epoch, batch_id, avg_cost))
 
     print('grad_norm: {}, clipped: {}'.format(grad_norms[0], grad_norms_clipped[0]))
-
+    
+    wandb_logs = {'global_step_fine': step,
+                  'train_batch_id': batch_id, 
+                  'performance/avg_cost': avg_cost,
+                  'performance/actor_loss': reinforce_loss.item(), 
+                  'grad_norm': grad_norms[0],
+                  'grad_norm_clipped': grad_norms_clipped[0],
+                  'nll': -log_likelihood.mean().item()}
+    wandb.log(data=wandb_logs)
     # Log values to tensorboard
     if not opts.no_tensorboard:
         tb_logger.log_value('avg_cost', avg_cost, step)

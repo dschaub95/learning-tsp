@@ -13,7 +13,7 @@ from torch.nn import DataParallel
 from utils.log_utils import log_values, log_values_sl
 from utils.data_utils import BatchedRandomSampler
 from utils import move_to
-
+import wandb
 
 def get_inner_model(model):
     return model.module if isinstance(model, DataParallel) else model
@@ -91,7 +91,6 @@ def train_epoch(model, optimizer, baseline, lr_scheduler, epoch, val_datasets, p
 
     if not opts.no_tensorboard:
         tb_logger.log_value('learnrate_pg0', optimizer.param_groups[0]['lr'], step)
-
     # Generate new training data for each epoch
     train_dataset = baseline.wrap_dataset(
         problem.make_dataset(
@@ -140,13 +139,19 @@ def train_epoch(model, optimizer, baseline, lr_scheduler, epoch, val_datasets, p
             },
             os.path.join(opts.save_dir, 'epoch-{}.pt'.format(epoch))
         )
-
+    wandb_logs = dict()
     for val_idx, val_dataset in enumerate(val_datasets):
         avg_reward, avg_opt_gap = validate(model, val_dataset, problem, opts)
         if not opts.no_tensorboard:
             tb_logger.log_value('val{}/avg_reward'.format(val_idx+1), avg_reward, step)
             tb_logger.log_value('val{}/opt_gap'.format(val_idx+1), avg_opt_gap, step)
-
+        # wandb logging
+        idx = val_idx + 1
+        wandb_logs[f'performance/val{idx}/avg_reward'] = avg_reward
+        wandb_logs[f'performance/val{idx}/opt_gap'] = avg_opt_gap
+    wandb_logs['learning_rate'] = optimizer.param_groups[0]['lr']
+    wandb_logs['global_step_coarse'] = step
+    wandb.log(data=wandb_logs)
     baseline.epoch_callback(model, epoch)
 
 
