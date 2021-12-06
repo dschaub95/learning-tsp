@@ -1,4 +1,4 @@
-name: tsp
+name: learning-tsp
 channels:
   - pytorch
   - conda-forge
